@@ -4,14 +4,15 @@ import java.util.Random;
 public class Main {
     public static void main(String[] args) {
         // Informasi Eksperimen
-        String hardwareSpecs = "Processor: Intel Core i5-9400F, RAM: 16GB, OS: Windows 11";
+        // String hardwareSpecs = "Processor: Intel Core i5-9400F, RAM: 16GB, OS:
+        // Windows 11";
         long startTime = System.currentTimeMillis();
 
         // Inisialisasi seed
         Random init = new Random(100);
         long seed = init.nextLong() % 1000; // Menghasilkan seed antara -1000 dan 999
         System.out.println("Seed yang digunakan: " + seed);
-        System.out.println("Spesifikasi Hardware: " + hardwareSpecs);
+        // System.out.println("Spesifikasi Hardware: " + hardwareSpecs);
 
         // Periksa apakah file input diberikan melalui args
         if (args.length < 2) {
