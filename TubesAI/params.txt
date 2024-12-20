@@ -1,3 +1,0 @@
-PopulationSize: 100
-Generations: 500
-MutationRate: 0.05
