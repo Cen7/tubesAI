@@ -177,4 +177,20 @@ public class Individual {
     public double getFitness() {
         return fitness;
     }
+
+    // jangan dihapus, untuk method main panggilnya dari sini
+    public void printPuzzle() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (puzzle[i][j] == 1) {
+                    System.out.print("B ");
+                } else if (puzzle[i][j] == 2) {
+                    System.out.print("W ");
+                } else {
+                    System.out.print("_ ");
+                }
+            }
+            System.out.println();
+        }
+    }
 }
