@@ -21,12 +21,12 @@ public class Main {
 
         String puzzleFile = args[0];
         String paramsFile = args[1];
-        int successfulRuns = 0;
         int totalRuns = 100; // Ubah sesuai jumlah percobaan yang diinginkan
 
         Random globalRandom = new Random(seed); // Random dengan seed tetap
 
         Individual bestOverallSolution = null; // Menyimpan solusi terbaik dari semua percobaan
+        double totalFitness = 0; // Akumulator nilai fitness total
 
         for (int i = 0; i < totalRuns; i++) {
             try {
@@ -37,18 +37,13 @@ public class Main {
                 // Eksekusi algoritma genetika
                 Individual solution = ga.solve(puzzle);
 
-                // Jika solusi valid ditemukan
-                if (solution.getFitness() >= GeneticAlgorithm.FITNESS_THRESHOLD) {
-                    successfulRuns++;
-                    System.out.println("Solusi ditemukan pada percobaan ke-" + (i + 1));
-                    solution.printPuzzle();
-                }
+                // Tambahkan nilai fitness ke total
+                totalFitness += solution.getFitness();
 
                 // Update solusi terbaik
                 if (bestOverallSolution == null || solution.getFitness() > bestOverallSolution.getFitness()) {
                     bestOverallSolution = solution;
                 }
-
             } catch (IOException e) {
                 System.err.println("Gagal membaca file: " + e.getMessage());
                 break; // Hentikan loop jika file tidak bisa dibaca
@@ -59,12 +54,16 @@ public class Main {
         long endTime = System.currentTimeMillis();
         double totalExecutionTime = (endTime - startTime) / 1000.0; // Dalam detik
 
+        // Hitung persentase keberhasilan berdasarkan nilai fitness total
+        double averageFitness = totalFitness / totalRuns;
+        double successRate = (averageFitness / GeneticAlgorithm.FITNESS_THRESHOLD) * 100.0;
+
         // Hasil eksperimen
         System.out.println("===========================================");
         System.out.println("Hasil Eksperimen:");
         System.out.println("Total Percobaan: " + totalRuns);
-        System.out.println("Percobaan Berhasil: " + successfulRuns);
-        System.out.println("Persentase Keberhasilan: " + (successfulRuns * 100.0 / totalRuns) + "%");
+        System.out.println("Rata-rata Fitness: " + averageFitness);
+        System.out.println("Persentase Keberhasilan: " + successRate + "%");
         System.out.println("Waktu Eksekusi: " + totalExecutionTime + " detik");
 
         // Tampilkan solusi terbaik yang ditemukan
