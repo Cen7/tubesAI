@@ -54,15 +54,17 @@ public class Main {
         long endTime = System.currentTimeMillis();
         double totalExecutionTime = (endTime - startTime) / 1000.0; // Dalam detik
 
-        // Hitung persentase keberhasilan berdasarkan nilai fitness total
-        double averageFitness = totalFitness / totalRuns;
-        double successRate = (averageFitness / GeneticAlgorithm.FITNESS_THRESHOLD) * 100.0;
+        // Hitung persentase keberhasilan berdasarkan solusi terbaik
+        double successRate = 0;
+        if (bestOverallSolution != null) {
+            successRate = (bestOverallSolution.getFitness() / GeneticAlgorithm.FITNESS_THRESHOLD) * 100.0;
+        }
 
         // Hasil eksperimen
         System.out.println("===========================================");
         System.out.println("Hasil Eksperimen:");
         System.out.println("Total Percobaan: " + totalRuns);
-        System.out.println("Rata-rata Fitness: " + averageFitness);
+        System.out.println("Rata-rata Fitness: " + (totalFitness / totalRuns));
         System.out.println("Persentase Keberhasilan: " + successRate + "%");
         System.out.println("Waktu Eksekusi: " + totalExecutionTime + " detik");
 

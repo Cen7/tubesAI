@@ -67,6 +67,8 @@ public class Individual {
         if (blackCount > 0) fitness += blackCount;
         if (whiteCount > 0) fitness += whiteCount;
     }
+
+    
     private int dfsCount(int x, int y, int color, boolean[][] visited) {
         if (x < 0 || y < 0 || x >= size || y >= size) return 0;
         if (visited[x][y] || puzzle[x][y] != color) return 0;
