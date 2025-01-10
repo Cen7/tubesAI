@@ -6,38 +6,48 @@ public class GeneticAlgorithm {
     private int generations;
     private double mutationRate;
     private Random gen; // Random number generator
-    static final int FITNESS_THRESHOLD = 100; // Contoh nilai optimal fitness
+    // nilai fitness minimum
+    static final int FITNESS_THRESHOLD = 55;
 
     public GeneticAlgorithm(int populationSize, int generations, double mutationRate, Random random) {
         this.populationSize = populationSize;
         this.generations = generations;
         this.mutationRate = mutationRate;
-        this.gen = random; // Menggunakan Random yang diberikan
+        this.gen = random;
     }
 
-
-    // Metode utama untuk menyelesaikan puzzle
     public Individual solve(Puzzle puzzle) {
+        // buat list populasi
         ArrayList<Individual> population = initializePopulation(puzzle);
+        Individual bestIndividual = findBestIndividual(population);
+        // jumlah generasi yang tidak punya improvement / stuck
+        int genLocalOptimum = 0;
 
+        // loop ini berjalan sebanyak nilai gen dari params.txt
         for (int genCount = 0; genCount < generations; genCount++) {
-            // Evolusi populasi
+            // evolusi dari populasi yg ada
             population = evolve(population, puzzle);
-
-            // Cari individu terbaik
-            Individual best = findBestIndividual(population);
-            //System.out.println("Generasi " + genCount + " - Fitness: " + best.getFitness());
-
-            // Jika solusi ditemukan
-            if (best.getFitness() >= FITNESS_THRESHOLD) {
-                //System.out.println("Solusi ditemukan di generasi ke-" + genCount);
-                return best;
+            // ambil individu terbaik di generasi saat ini
+            Individual currentTopIndividual = findBestIndividual(population);
+            // cek fitnessnya, compare dengan individual terbaik keseluruhan
+            // jika lebih baik, override bestIndividual
+            if (currentTopIndividual.getFitness() > bestIndividual.getFitness()) {
+                bestIndividual = currentTopIndividual;
+                // reset counter genLocalMaxima
+                genLocalOptimum = 0;
+            } else {
+                genLocalOptimum++;
+            }
+            // jika stuck di local optimum, diversifikasikan lalu looping lagi
+            if (genLocalOptimum > 50) {
+                population = diversifyPopulation(population, puzzle);
+                genLocalOptimum = 0;
+            }
+            if (bestIndividual.getFitness() >= FITNESS_THRESHOLD) {
+                return bestIndividual;
             }
         }
-
-        // Jika tidak ditemukan solusi optimal
-        //System.out.println("Solusi tidak ditemukan setelah " + generations + " generasi.");
-        return findBestIndividual(population);
+        return bestIndividual;
     }
 
     // Inisialisasi populasi
@@ -49,34 +59,55 @@ public class GeneticAlgorithm {
         return population;
     }
 
-    // Evolusi populasi: seleksi, crossover, mutasi
+    // revisi method evolve
     private ArrayList<Individual> evolve(ArrayList<Individual> population, Puzzle puzzle) {
         ArrayList<Individual> newPopulation = new ArrayList<>();
 
+        // ambil 10% individu/sampel terbaik
+        int topIndividualCount = populationSize / 10;
+        ArrayList<Individual> sortedPopulation = new ArrayList<>(population);
+        // pakai lamda untuk sort/compare data supaya terurut berdasarkan fitnessnya
+        sortedPopulation.sort((a, b) -> Double.compare(b.getFitness(), a.getFitness()));
+        // masukkan ke newPopulation
+        for (int i = 0; i < topIndividualCount; i++) {
+            newPopulation.add(sortedPopulation.get(0));
+        }
+        // proses crossover
         while (newPopulation.size() < populationSize) {
-            // Seleksi parent
-            // Individual parent1 = selectParent(population);
-            // Individual parent2 = selectParent(population);
-            // pilih parent ranked berdasarkan 1/2 dari populasi
-            Individual parent1 = selectParentRanked(population, populationSize / 2);
-            Individual parent2 = selectParentRanked(population, populationSize / 2);
+            Individual parent1 = tournamentSelection(population, 5);
+            Individual parent2 = tournamentSelection(population, 5);
 
-            // Crossover
             Individual child = parent1.crossover(parent2, gen);
-
-            // Mutasi
+            // mutasi selama dibawah mutationRate
             if (gen.nextDouble() < mutationRate) {
                 child.mutate(gen);
             }
-
             newPopulation.add(child);
         }
 
         return newPopulation;
     }
 
-    // Seleksi parent menggunakan Roulette Wheel Selection
-    private Individual selectParent(ArrayList<Individual> population) {
+    // seleksi parent menggunakan tournament selection
+    private Individual tournamentSelection(ArrayList<Individual> population, int tournamentSize) {
+        Individual best = null;
+
+        // loop sebanyak tournamentSize
+        for (int i = 0; i < tournamentSize; i++) {
+            // memilih individu secara acak dari populasi
+            Individual contestant = population.get(gen.nextInt(population.size()));
+
+            // jika belum ada individu terbaik, atau individu terpilih memiliki fitness
+            // lebih tinggi, maka update individu terbaik
+            if (best == null || contestant.getFitness() > best.getFitness()) {
+                best = contestant;
+            }
+        }
+        return best;
+    }
+
+    // seleksi parent menggunakan Roulette Wheel Selection
+    private Individual rouletteWheelSelection(ArrayList<Individual> population) {
         double totalFitness = population.stream().mapToDouble(Individual::getFitness).sum();
         double rouletteWheel = gen.nextDouble() * totalFitness;
 
@@ -91,28 +122,6 @@ public class GeneticAlgorithm {
         return population.get(0); // Default fallback
     }
 
-    // cara lain untuk seleksi randomized ranks :
-    private Individual selectParentRanked(ArrayList<Individual> population, int tournamentSize) {
-        // tournamentSize ini untuk fine-tune pilihannya berapa, diisi pada parameter
-        ArrayList<Individual> tournamentParticipants = new ArrayList<>();
-
-        // pilih acak sebanyak tournament size
-        for (int i = 0; i < tournamentSize; i++) {
-            Individual participant = population.get(gen.nextInt(population.size()));
-            tournamentParticipants.add(participant);
-        }
-
-        // cari individu terbaik dari arraylist individual yang dipilih
-        Individual bestParent = tournamentParticipants.get(0);
-        for (Individual participant : tournamentParticipants) {
-            if (participant.getFitness() > bestParent.getFitness()) {
-                bestParent = participant;
-            }
-        }
-
-        return bestParent;
-    }
-
     // Cari individu terbaik dalam populasi
     private Individual findBestIndividual(ArrayList<Individual> population) {
         Individual best = population.get(0);
@@ -122,5 +131,23 @@ public class GeneticAlgorithm {
             }
         }
         return best;
+    }
+
+    // ini untuk regenerate supaya sampelnya tidak itu-itu saja
+    private ArrayList<Individual> diversifyPopulation(ArrayList<Individual> population, Puzzle puzzle) {
+        // Keep top 20% and regenerate rest randomly
+        int keepSize = populationSize / 5;
+        ArrayList<Individual> newPopulation = new ArrayList<>();
+
+        population.sort((a, b) -> Double.compare(b.getFitness(), a.getFitness()));
+        for (int i = 0; i < keepSize; i++) {
+            newPopulation.add(population.get(i));
+        }
+
+        while (newPopulation.size() < populationSize) {
+            newPopulation.add(new Individual(puzzle, gen));
+        }
+
+        return newPopulation;
     }
 }
