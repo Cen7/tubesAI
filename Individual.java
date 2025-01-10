@@ -79,8 +79,6 @@ public class Individual {
 
         // jika grouping hitam / putih lebih dari satu artinya ada yg terputus
         // kurangi nilai fitnessnya
-
-        // 1. Multiple groups penalty (should be only one group per color)
         if (blackGroups > 1) {
             fitness -= 25 * (blackGroups - 1);
         }
