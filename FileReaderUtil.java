@@ -11,6 +11,7 @@ public class FileReaderUtil {
         int size = Integer.parseInt(firstLine[0]);
         String difficulty = firstLine[1];
         int id = Integer.parseInt(firstLine[2]);
+        
 
         // Buat papan puzzle
         int[][] board = new int[size][size];
@@ -46,14 +47,14 @@ public class FileReaderUtil {
         br.close();
         return new Puzzle(size, difficulty, id, board);
     }
-
+    
     public static GeneticAlgorithm readParamsFromFile(String fileName, Random random) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(fileName));
     
         int populationSize = Integer.parseInt(br.readLine().split(":")[1].trim());
         int generations = Integer.parseInt(br.readLine().split(":")[1].trim());
         double mutationRate = Double.parseDouble(br.readLine().split(":")[1].trim());
-    
+        
         br.close();
         return new GeneticAlgorithm(populationSize, generations, mutationRate, random);
     }

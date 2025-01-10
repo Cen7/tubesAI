@@ -7,7 +7,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
 
         // Seed tetap untuk eksperimen yang dapat direproduksi
-        long seed = 125; // Seed yang digunakan untuk seluruh random number
+        long seed = -762; // Seed yang digunakan untuk seluruh random number
         Random globalRandom = new Random(seed); // Random dengan seed tetap
 
         // Cetak seed yang digunakan
@@ -21,22 +21,36 @@ public class Main {
 
         String puzzleFile = args[0];
         String paramsFile = args[1];
-        int totalRuns = 100; // Jumlah percobaan yang diinginkan
+        int totalRuns = 300; // Jumlah percobaan yang diinginkan
 
         Individual bestOverallSolution = null; // Menyimpan solusi terbaik dari semua percobaan
         double totalFitness = 0; // Akumulator nilai fitness total
 
+        // Baca parameter GA di luar loop untuk ditampilkan
+        GeneticAlgorithm ga = null;
+        Puzzle puzzle = null;
+        try {
+            // Baca puzzle terlebih dahulu untuk mendapatkan ID
+            puzzle = FileReaderUtil.readPuzzleFromFile(puzzleFile);
+            System.out.println("Puzzle ID : " + puzzle.getId());
+            System.out.println("Difficulity : " + puzzle.getDifficulty());
+            ga = FileReaderUtil.readParamsFromFile(paramsFile, globalRandom);
+            // Print parameter GA
+            System.out.println("Population Size : " + ga.getPopulationSize());
+            System.out.println("Generation : " + ga.getGenerations());
+            System.out.println("Mutation Rate : " + ga.getMutationRate());
+        } catch (IOException e) {
+            System.err.println("Gagal membaca file parameter: " + e.getMessage());
+            return;
+        }
+
         for (int i = 0; i < totalRuns; i++) {
             try {
-                // Baca Puzzle dan Parameter dari file
-                Puzzle puzzle = FileReaderUtil.readPuzzleFromFile(puzzleFile);
-                GeneticAlgorithm ga = FileReaderUtil.readParamsFromFile(paramsFile, globalRandom);
+                // Baca Puzzle dari file
+                puzzle = FileReaderUtil.readPuzzleFromFile(puzzleFile);
 
                 // Eksekusi algoritma genetika
                 Individual solution = ga.solve(puzzle);
-
-                // Debug nilai fitness
-                //System.out.println("Percobaan " + (i + 1) + ": Fitness = " + solution.getFitness());
 
                 // Tambahkan nilai fitness ke total
                 totalFitness += solution.getFitness();
@@ -47,10 +61,11 @@ public class Main {
                 }
             } catch (IOException e) {
                 System.err.println("Gagal membaca file: " + e.getMessage());
-                break; // Hentikan loop jika file tidak bisa dibaca
+                break;
             }
         }
 
+        // [Rest of the code remains the same...]
         // Hitung waktu eksekusi
         long endTime = System.currentTimeMillis();
         double totalExecutionTime = (endTime - startTime) / 1000.0; // Dalam detik
@@ -76,8 +91,6 @@ public class Main {
         System.out.println("Rata-rata Fitness: " + (totalFitness / totalRuns));
         System.out.println("Persentase Keberhasilan: " + successRate + "%");
         System.out.println("Waktu Eksekusi: " + totalExecutionTime + " detik");
-        // System.out.println("Nilai acak pertama: " + globalRandom.nextInt(100));
-        // System.out.println("Nilai acak kedua: " + globalRandom.nextDouble());
 
         // Tampilkan solusi terbaik yang ditemukan
         if (bestOverallSolution != null) {
