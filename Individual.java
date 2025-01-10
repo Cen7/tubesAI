@@ -31,99 +31,99 @@ public class Individual {
         }
     }
 
+    // revisi perhitungan fitness individu
     private void evaluateFitness() {
-        fitness = 0;
+        fitness = 100; // nilai fitness awal
+        // value untuk kalkulasi tiap aturan
+        int totalCells = size * size;
+        int filledCells = 0;
+        int blackCells = 0;
+        int whiteCells = 0;
 
-        // Periksa aturan larangan 2x2
-        for (int i = 0; i < size - 1; i++) {
-            for (int j = 0; j < size - 1; j++) {
-                int color = puzzle[i][j];
-                if (color != 0 && color == puzzle[i][j + 1]
-                        && color == puzzle[i + 1][j]
-                        && color == puzzle[i + 1][j + 1]) {
-                    // Penalti jika ada blok 2x2 dengan warna seragam
-                    fitness -= 10;
+        // loop untuk menghitung area yang terisi
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (puzzle[i][j] == 1) {
+                    blackCells++;
+                    filledCells++;
+                } else if (puzzle[i][j] == 2) {
+                    whiteCells++;
+                    filledCells++;
                 }
             }
         }
 
-        // Periksa konektivitas warna
+        // aturan 1&2 cek konektivitas hitam & putihnya memakai array
         boolean[][] visited = new boolean[size][size];
-        int blackCount = 0, whiteCount = 0;
+        int blackGroups = 0;
+        int whiteGroups = 0;
+        int largestBlackGroup = 0;
+        int largestWhiteGroup = 0;
+
+        // dan dihitung ukuran grupnya
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (!visited[i][j]) {
-                    int color = puzzle[i][j];
-                    if (color != 0) {
-                        int count = dfsCount(i, j, color, visited);
-                        if (color == 1)
-                            blackCount += count;
-                        else if (color == 2)
-                            whiteCount += count;
+                    if (puzzle[i][j] == 1) { // Black
+                        blackGroups++;
+                        int groupSize = dfsCount(i, j, 1, visited);
+                        largestBlackGroup = Math.max(largestBlackGroup, groupSize);
+                    } else if (puzzle[i][j] == 2) { // White
+                        whiteGroups++;
+                        int groupSize = dfsCount(i, j, 2, visited);
+                        largestWhiteGroup = Math.max(largestWhiteGroup, groupSize);
                     }
                 }
             }
         }
 
-        // Jika semua hitam/putih terhubung, tambahkan fitness
-        if (blackCount > 0)
-            fitness += blackCount;
-        if (whiteCount > 0)
-            fitness += whiteCount;
-
-        // tambahan, parity counting dan pengecekan area tepian
-
-        boolean validBoundary = checkBoundaryParity();
-        if (validBoundary) {
-            fitness += 20; // Tambahkan bonus jika boundary valid
-        } else {
-            fitness -= 20; // Penalti jika boundary tidak valid
+        // jika grouping hitam / putih lebih dari satu artinya ada yg terputus
+        // kurangi nilai fitnessnya
+        if (blackGroups > 1) {
+            fitness -= 25 * (blackGroups - 1);
+        }
+        if (whiteGroups > 1) {
+            fitness -= 25 * (whiteGroups - 1);
         }
 
-    }
+        // ini cek keseimbangan area putih & hitam, tidak boleh sama
+        // jumlah dari hitam dan putih salah satunya harus ganjil/genap
+        double idealBalance = filledCells / 2.0;
+        double blackBalancePenalty = Math.abs(blackCells - idealBalance) * 2;
+        double whiteBalancePenalty = Math.abs(whiteCells - idealBalance) * 2;
+        fitness -= (blackBalancePenalty + whiteBalancePenalty);
 
-    private boolean checkBoundaryParity() {
-        int whiteBoundary = 0;
-        int blackBoundary = 0;
-
-        // cek di area terluar
-        for (int i = 0; i < size; i++) {
-            // cek titik di baris pertama dan terakhir
-            if (puzzle[0][i] == 1) // cek putih
-                whiteBoundary++;
-            else if (puzzle[0][i] == 2) // cek hitam
-                blackBoundary++;
-            if (puzzle[size - 1][i] == 1) // cek tetangga putih
-                whiteBoundary++;
-            else if (puzzle[size - 1][i] == 2) // cek tetangga putih
-                blackBoundary++;
-        }
-
-        for (int i = 1; i < size - 1; i++) {
-            // cek kolom pertama & terakhir
-            if (puzzle[i][0] == 1)
-                whiteBoundary++; // Hitung titik putih
-            else if (puzzle[i][0] == 2)
-                blackBoundary++; // Hitung titik hitam
-
-            if (puzzle[i][size - 1] == 1)
-                whiteBoundary++; // Hitung titik putih
-            else if (puzzle[i][size - 1] == 2)
-                blackBoundary++; // Hitung titik hitam
-        }
-
-        // Aturan paritas untuk grid ganjil dan genap
-        if ((size % 2 == 1)) { // Ukuran ganjil
-            if (whiteBoundary == blackBoundary) {
-                return true; // Paritas valid jika jumlah titik putih dan hitam sama
-            }
-        } else { // Ukuran genap
-            if (Math.abs(whiteBoundary - blackBoundary) == 1) {
-                return true; // Paritas valid jika selisih titik putih dan hitam adalah 1
+        // cek aturan ketiga : tidak boleh ada loop 2x2
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if (puzzle[i][j] != 0 &&
+                        puzzle[i][j] == puzzle[i][j + 1] &&
+                        puzzle[i][j] == puzzle[i + 1][j] &&
+                        puzzle[i][j] == puzzle[i + 1][j + 1]) {
+                    fitness -= 20;
+                }
             }
         }
 
-        return false; // Jika paritas tidak valid
+        // tambahkan fitness jika berdasarkan jumlah grup hitam dan putih
+        // semakin bergerombol maka semakin baik
+        fitness += (largestBlackGroup + largestWhiteGroup) / 2.0;
+
+        // cek boundary rules, ini tidak dipakai dulu
+        // if (size % 2 == 0) {
+        // // ganjil
+        // if (Math.abs(blackCells - whiteCells) != 1) {
+        // fitness -= 15;
+        // }
+        // } else {
+        // // genap
+        // if (blackCells != whiteCells) {
+        // fitness -= 15;
+        // }
+        // }
+
+        // fitness ini ada fallback supaya tidak minus, set ke 0 untuk nilai terjelek
+        fitness = Math.max(0, fitness);
     }
 
     private int dfsCount(int x, int y, int color, boolean[][] visited) {
