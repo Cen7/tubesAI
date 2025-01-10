@@ -9,7 +9,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
 
         // Inisialisasi seed
-        Random init = new Random(100);
+        Random init = new Random(150);
         long seed = init.nextLong() % 1000; // Menghasilkan seed antara -1000 dan 999
         System.out.println("Seed yang digunakan: " + seed);
         // System.out.println("Spesifikasi Hardware: " + hardwareSpecs);
@@ -22,7 +22,7 @@ public class Main {
 
         String puzzleFile = args[0];
         String paramsFile = args[1];
-        int totalRuns = 100; // Ubah sesuai jumlah percobaan yang diinginkan
+        int totalRuns = 1000;// Ubah sesuai jumlah percobaan yang diinginkan
 
         Random globalRandom = new Random(seed); // Random dengan seed tetap
 
@@ -58,7 +58,15 @@ public class Main {
         // Hitung persentase keberhasilan berdasarkan solusi terbaik
         double successRate = 0;
         if (bestOverallSolution != null) {
-            successRate = (bestOverallSolution.getFitness() / GeneticAlgorithm.FITNESS_THRESHOLD) * 100.0;
+            double fitness = bestOverallSolution.getFitness();
+            double minFitness = -200.0; // Nilai minimum fitness
+            double maxFitness = 100.0; // Nilai maksimum fitness
+
+            // Normalisasi nilai fitness ke skala 0-100
+            successRate = ((fitness - minFitness) / (maxFitness - minFitness)) * 100.0;
+
+            // Pastikan nilai berada di rentang 0-100
+            successRate = Math.max(0, Math.min(successRate, 100));
         }
 
         // Hasil eksperimen

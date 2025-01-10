@@ -70,7 +70,7 @@ public class GeneticAlgorithm {
         sortedPopulation.sort((a, b) -> Double.compare(b.getFitness(), a.getFitness()));
         // masukkan ke newPopulation
         for (int i = 0; i < topIndividualCount; i++) {
-            newPopulation.add(sortedPopulation.get(0));
+            newPopulation.add(sortedPopulation.get(i));
         }
         // proses crossover
         while (newPopulation.size() < populationSize) {
