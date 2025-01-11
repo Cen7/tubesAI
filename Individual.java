@@ -33,20 +33,21 @@ public class Individual {
 
     // revisi perhitungan fitness individu
     private void evaluateFitness() {
-        fitness = 100; // nilai fitness awal
+        // Menetapkan nilai fitness awal yang baik (fitness dimulai pada 100)
+        fitness = 100; 
         int totalCells = size * size;
         int filledCells = 0;
         int blackCells = 0;
         int whiteCells = 0;
     
-        // loop untuk menghitung area yang terisi
+        // Menghitung jumlah sel yang diwarnai (Hitam dan Putih)
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (puzzle[i][j] == 1) {
-                    blackCells++;
+                    blackCells++;  // Jumlah sel hitam
                     filledCells++;
                 } else if (puzzle[i][j] == 2) {
-                    whiteCells++;
+                    whiteCells++;  // Jumlah sel putih
                     filledCells++;
                 }
             }
@@ -59,7 +60,7 @@ public class Individual {
         int largestBlackGroup = 0;
         int largestWhiteGroup = 0;
     
-        // menggunakan DFS untuk menghitung kelompok hitam dan putih serta ukuran terbesar
+        // Menentukan grup warna hitam dan putih serta ukuran grup terbesar masing-masing
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (!visited[i][j]) {
@@ -76,36 +77,89 @@ public class Individual {
             }
         }
     
-        // jika grouping hitam / putih lebih dari satu artinya ada yg terputus
-        // kurangi nilai fitnessnya
-        if (blackGroups > 1) {
-            fitness -= 20 * (blackGroups - 1);  
-        }
-        if (whiteGroups > 1) {
-            fitness -= 20 * (whiteGroups - 1);  
-        }
-    
-        // Menyesuaikan keseimbangan penalti dengan hanya menurunkan penalti pada distribusi hitam dan putih
-        double balancePenalty = Math.abs(blackCells - whiteCells) * 1.5;  // Menurunkan penalti agar ada fleksibilitas
+
+
+        // Penalti jika perbedaan jumlah hitam dan putih terlalu besar
+        double balancePenalty = Math.abs(blackCells - whiteCells) * 2.0;  
         fitness -= balancePenalty;
     
-        // Menyempurnakan evaluasi agar fitness mendekati 100 untuk konfigurasi yang tepat
-        fitness = Math.max(0, fitness);  // Mencegah fitness menjadi negatif
+        // Penalti jika grup warna hitam atau putih terlalu terpisah
+        if (blackGroups > 1) {
+            fitness -= 17 * (blackGroups - 1);  
+        }
+        if (whiteGroups > 1) {
+            fitness -= 17 * (whiteGroups - 1);  
+        }
+    
+        // ini cek keseimbangan area putih & hitam, tidak boleh sama
+        // jumlah dari hitam dan putih salah satunya harus ganjil/genap
+        double idealBalance = filledCells / 2.0;
+        double blackBalancePenalty = Math.abs(blackCells - idealBalance) * 2;
+        double whiteBalancePenalty = Math.abs(whiteCells - idealBalance) * 2;
+        fitness -= (blackBalancePenalty + whiteBalancePenalty);
+
+        // cek aturan ketiga : tidak boleh ada loop 2x2
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if (puzzle[i][j] != 0 &&
+                        puzzle[i][j] == puzzle[i][j + 1] &&
+                        puzzle[i][j] == puzzle[i + 1][j] &&
+                        puzzle[i][j] == puzzle[i + 1][j + 1]) {
+                    fitness -= 20;
+                }
+            }
+        }
+
+        // tambahkan fitness jika berdasarkan jumlah grup hitam dan putih
+        // semakin bergerombol maka semakin baik
+        fitness += (largestBlackGroup + largestWhiteGroup) / 2.0;
+
+        // cek boundary rules, ini tidak dipakai dulu
+        // if (size % 2 == 0) {
+        // // ganjil
+        // if (Math.abs(blackCells - whiteCells) != 1) {
+        // fitness -= 15;
+        // }
+        // } else {
+        // // genap
+        // if (blackCells != whiteCells) {
+        // fitness -= 15;
+        // }
+        // }
+
+        // fitness ini ada fallback supaya tidak minus, set ke 0 untuk nilai terjelek
+        fitness = Math.max(0, fitness);  
     }
 
-    private int dfsCount(int x, int y, int color, boolean[][] visited) {
-        if (x < 0 || y < 0 || x >= size || y >= size)
-            return 0;
-        if (visited[x][y] || puzzle[x][y] != color)
-            return 0;
+    // Fungsi tambahan untuk memeriksa pola yang tidak sesuai dengan aturan permainan
+    // private boolean checkInvalidPatterns(int[][] puzzle) {
+    //     for (int i = 0; i < size; i++) {
+    //         for (int j = 0; j < size - 1; j++) {
+    //             // Periksa apakah ada dua sel berturut-turut yang memiliki warna yang sama, baik horizontal maupun vertikal
+    //             if ((puzzle[i][j] == puzzle[i][j + 1] && puzzle[i][j] != 0) || 
+    //                 (i < size - 1 && puzzle[i][j] == puzzle[i + 1][j] && puzzle[i][j] != 0)) {
+    //                 return true; // Mengembalikan true jika ditemukan pola yang tidak valid
+    //             }
+    //         }
+    //     }
+    //     return false;  // Jika tidak ada pola yang salah
+    // }
 
-        visited[x][y] = true;
-        int count = 1;
-        count += dfsCount(x + 1, y, color, visited);
-        count += dfsCount(x - 1, y, color, visited);
-        count += dfsCount(x, y + 1, color, visited);
-        count += dfsCount(x, y - 1, color, visited);
-        return count;
+    private int dfsCount(int row, int col, int color, boolean[][] visited) {
+        if (row < 0 || col < 0 || row >= size || col >= size || visited[row][col] || puzzle[row][col] != color) {
+            return 0; // keluar dari DFS jika out-of-bounds atau sudah dikunjungi
+        }
+    
+        visited[row][col] = true;  // Tandai sel ini sebagai dikunjungi
+        int groupSize = 1;  // Awali ukuran grup dengan 1 (sel ini)
+    
+        // Panggil DFS untuk mengeksplorasi tetangga (atas, bawah, kiri, kanan)
+        groupSize += dfsCount(row - 1, col, color, visited);
+        groupSize += dfsCount(row + 1, col, color, visited);
+        groupSize += dfsCount(row, col - 1, color, visited);
+        groupSize += dfsCount(row, col + 1, color, visited);
+    
+        return groupSize; // Kembalikan ukuran grup yang ditemukan
     }
 
     // Method mutasi dengan random generator
