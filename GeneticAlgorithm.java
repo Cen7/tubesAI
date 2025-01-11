@@ -148,19 +148,27 @@ public class GeneticAlgorithm {
 
     // ini untuk regenerate supaya sampelnya tidak itu-itu saja
     private ArrayList<Individual> diversifyPopulation(ArrayList<Individual> population, Puzzle puzzle) {
-        // Keep top 20% and regenerate rest randomly
-        int keepSize = populationSize / 5;
+        // mengurangi jumlah individu acak untuk menjaga keberagaman populasi saat ini lebih banyak
+        int keepSize = (int)(populationSize * 0.3);  // menyimpan 30% dari populasi untuk eksplorasi yang lebih baik
         ArrayList<Individual> newPopulation = new ArrayList<>();
-
+    
+        // mengurutkan populasi berdasarkan nilai fitness secara menurun
         population.sort((a, b) -> Double.compare(b.getFitness(), a.getFitness()));
-        for (int i = 0; i < keepSize; i++) {
+        // memasukkan individu dengan fitness terbaik ke populasi baru
+        for (int i = 0; i < keepSize; i++) { 
             newPopulation.add(population.get(i));
         }
-
+    
+        // menghasilkan sisa populasi dengan mutasi untuk menambah variasi baru
         while (newPopulation.size() < populationSize) {
-            newPopulation.add(new Individual(puzzle, gen));
+            Individual parent = tournamentSelection(population, 5);
+            Individual child = parent.crossover(parent, gen);
+            // melakukan mutasi jika nilai acak lebih kecil dari tingkat mutasi untuk memastikan adanya keberagaman
+            if (gen.nextDouble() < mutationRate) {
+                child.mutate(gen);  
+            }
+            newPopulation.add(child);
         }
-
         return newPopulation;
     }
 }

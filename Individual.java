@@ -34,12 +34,11 @@ public class Individual {
     // revisi perhitungan fitness individu
     private void evaluateFitness() {
         fitness = 100; // nilai fitness awal
-        // value untuk kalkulasi tiap aturan
         int totalCells = size * size;
         int filledCells = 0;
         int blackCells = 0;
         int whiteCells = 0;
-
+    
         // loop untuk menghitung area yang terisi
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -52,23 +51,23 @@ public class Individual {
                 }
             }
         }
-
+    
         // aturan 1&2 cek konektivitas hitam & putihnya memakai array
         boolean[][] visited = new boolean[size][size];
         int blackGroups = 0;
         int whiteGroups = 0;
         int largestBlackGroup = 0;
         int largestWhiteGroup = 0;
-
-        // dan dihitung ukuran grupnya
+    
+        // menggunakan DFS untuk menghitung kelompok hitam dan putih serta ukuran terbesar
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (!visited[i][j]) {
-                    if (puzzle[i][j] == 1) { // Black
+                    if (puzzle[i][j] == 1) { 
                         blackGroups++;
                         int groupSize = dfsCount(i, j, 1, visited);
                         largestBlackGroup = Math.max(largestBlackGroup, groupSize);
-                    } else if (puzzle[i][j] == 2) { // White
+                    } else if (puzzle[i][j] == 2) {
                         whiteGroups++;
                         int groupSize = dfsCount(i, j, 2, visited);
                         largestWhiteGroup = Math.max(largestWhiteGroup, groupSize);
@@ -76,54 +75,22 @@ public class Individual {
                 }
             }
         }
-
+    
         // jika grouping hitam / putih lebih dari satu artinya ada yg terputus
         // kurangi nilai fitnessnya
         if (blackGroups > 1) {
-            fitness -= 25 * (blackGroups - 1);
+            fitness -= 20 * (blackGroups - 1);  
         }
         if (whiteGroups > 1) {
-            fitness -= 25 * (whiteGroups - 1);
+            fitness -= 20 * (whiteGroups - 1);  
         }
-
-        // ini cek keseimbangan area putih & hitam, tidak boleh sama
-        // jumlah dari hitam dan putih salah satunya harus ganjil/genap
-        double idealBalance = filledCells / 2.0;
-        double blackBalancePenalty = Math.abs(blackCells - idealBalance) * 2;
-        double whiteBalancePenalty = Math.abs(whiteCells - idealBalance) * 2;
-        fitness -= (blackBalancePenalty + whiteBalancePenalty);
-
-        // cek aturan ketiga : tidak boleh ada loop 2x2
-        for (int i = 0; i < size - 1; i++) {
-            for (int j = 0; j < size - 1; j++) {
-                if (puzzle[i][j] != 0 &&
-                        puzzle[i][j] == puzzle[i][j + 1] &&
-                        puzzle[i][j] == puzzle[i + 1][j] &&
-                        puzzle[i][j] == puzzle[i + 1][j + 1]) {
-                    fitness -= 20;
-                }
-            }
-        }
-
-        // tambahkan fitness jika berdasarkan jumlah grup hitam dan putih
-        // semakin bergerombol maka semakin baik
-        fitness += (largestBlackGroup + largestWhiteGroup) / 2.0;
-
-        // cek boundary rules, ini tidak dipakai dulu
-        // if (size % 2 == 0) {
-        // // ganjil
-        // if (Math.abs(blackCells - whiteCells) != 1) {
-        // fitness -= 15;
-        // }
-        // } else {
-        // // genap
-        // if (blackCells != whiteCells) {
-        // fitness -= 15;
-        // }
-        // }
-
-        // fitness ini ada fallback supaya tidak minus, set ke 0 untuk nilai terjelek
-        fitness = Math.max(0, fitness);
+    
+        // Menyesuaikan keseimbangan penalti dengan hanya menurunkan penalti pada distribusi hitam dan putih
+        double balancePenalty = Math.abs(blackCells - whiteCells) * 1.5;  // Menurunkan penalti agar ada fleksibilitas
+        fitness -= balancePenalty;
+    
+        // Menyempurnakan evaluasi agar fitness mendekati 100 untuk konfigurasi yang tepat
+        fitness = Math.max(0, fitness);  // Mencegah fitness menjadi negatif
     }
 
     private int dfsCount(int x, int y, int color, boolean[][] visited) {
@@ -175,7 +142,7 @@ public class Individual {
 
     // return nilai fitness
     public double getFitness() {
-        return fitness;
+        return Math.min(100, fitness);  // Membatasi nilai fitness maksimal hingga 100
     }
 
     // jangan dihapus, untuk method main panggilnya dari sini
