@@ -34,24 +34,6 @@ public class Individual {
     // revisi perhitungan fitness individu
     private void evaluateFitness() {
         fitness = 100; // nilai fitness awal
-        // value untuk kalkulasi tiap aturan
-        int totalCells = size * size;
-        int filledCells = 0;
-        int blackCells = 0;
-        int whiteCells = 0;
-
-        // loop untuk menghitung area yang terisi
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (puzzle[i][j] == 1) {
-                    blackCells++;
-                    filledCells++;
-                } else if (puzzle[i][j] == 2) {
-                    whiteCells++;
-                    filledCells++;
-                }
-            }
-        }
 
         // aturan 1&2 cek konektivitas hitam & putihnya memakai array
         boolean[][] visited = new boolean[size][size];
@@ -88,39 +70,40 @@ public class Individual {
 
         // ini cek keseimbangan area putih & hitam, tidak boleh sama
         // jumlah dari hitam dan putih salah satunya harus ganjil/genap
-        double idealBalance = filledCells / 2.0;
-        double blackBalancePenalty = Math.abs(blackCells - idealBalance) * 2;
-        double whiteBalancePenalty = Math.abs(whiteCells - idealBalance) * 2;
-        fitness -= (blackBalancePenalty + whiteBalancePenalty);
+        // revisi karena ini checking berdasarkan blackCells / whiteCells secara
+        // keseluruhan
+        // seharusnya ini dicek tiap baris
+        double rowBalancePenalty = 0;
+        for (int i = 0; i < size; i++) {
+            int blackCellsInRow = 0;
+            int whiteCellsInRow = 0;
 
-        // cek aturan ketiga : tidak boleh ada loop 2x2
-        for (int i = 0; i < size - 1; i++) {
-            for (int j = 0; j < size - 1; j++) {
-                if (puzzle[i][j] != 0 &&
-                        puzzle[i][j] == puzzle[i][j + 1] &&
-                        puzzle[i][j] == puzzle[i + 1][j] &&
-                        puzzle[i][j] == puzzle[i + 1][j + 1]) {
-                    fitness -= 20;
+            // hitung jum
+            for (int j = 0; j < size; j++) {
+                if (puzzle[i][j] == 1) {
+                    blackCellsInRow++;
+                } else if (puzzle[i][j] == 2) {
+                    whiteCellsInRow++;
                 }
             }
+
+            // Penalti jika jumlah sel hitam dan putih sama dalam satu baris
+            if (blackCellsInRow == whiteCellsInRow) {
+                rowBalancePenalty += 15; // Penalti untuk kesamaan dalam baris
+            }
+
+            // Hitung penalti berdasarkan selisih jumlah dalam baris
+            double rowDifference = Math.abs(blackCellsInRow - whiteCellsInRow);
+            if (rowDifference > 1) {
+                // Penalti tambahan jika selisih terlalu besar dalam satu baris
+                rowBalancePenalty += (rowDifference - 1) * 10;
+            }
         }
+        fitness -= rowBalancePenalty;
 
         // tambahkan fitness jika berdasarkan jumlah grup hitam dan putih
         // semakin bergerombol maka semakin baik
         fitness += (largestBlackGroup + largestWhiteGroup) / 2.0;
-
-        // cek boundary rules, ini tidak dipakai dulu
-        // if (size % 2 == 0) {
-        // // ganjil
-        // if (Math.abs(blackCells - whiteCells) != 1) {
-        // fitness -= 15;
-        // }
-        // } else {
-        // // genap
-        // if (blackCells != whiteCells) {
-        // fitness -= 15;
-        // }
-        // }
 
         // fitness ini ada fallback supaya tidak minus, set ke 0 untuk nilai terjelek
         fitness = Math.max(0, fitness);
