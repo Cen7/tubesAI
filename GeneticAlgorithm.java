@@ -16,6 +16,19 @@ public class GeneticAlgorithm {
         this.gen = random;
     }
 
+    // Add getter methods
+    public int getPopulationSize() {
+        return populationSize;
+    }
+
+    public int getGenerations() {
+        return generations;
+    }
+
+    public double getMutationRate() {
+        return mutationRate;
+    }
+
     public Individual solve(Puzzle puzzle) {
         // buat list populasi
         ArrayList<Individual> population = initializePopulation(puzzle);
