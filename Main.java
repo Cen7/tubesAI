@@ -21,7 +21,6 @@ public class Main {
 
         String puzzleFile = args[0];
         String paramsFile = args[1];
-        int totalRuns = 300; // Jumlah percobaan yang diinginkan
 
         Individual bestOverallSolution = null; // Menyimpan solusi terbaik dari semua percobaan
         double totalFitness = 0; // Akumulator nilai fitness total
@@ -43,6 +42,8 @@ public class Main {
             System.err.println("Gagal membaca file parameter: " + e.getMessage());
             return;
         }
+        // totalRuns sekarang pakai jumlah generasi yang ada
+        int totalRuns = ga.getGenerations; 
 
         for (int i = 0; i < totalRuns; i++) {
             try {
@@ -65,7 +66,6 @@ public class Main {
             }
         }
 
-        // [Rest of the code remains the same...]
         // Hitung waktu eksekusi
         long endTime = System.currentTimeMillis();
         double totalExecutionTime = (endTime - startTime) / 1000.0; // Dalam detik
@@ -89,7 +89,6 @@ public class Main {
         System.out.println("Hasil Eksperimen:");
         System.out.println("Total Percobaan: " + totalRuns);
         System.out.println("Rata-rata Fitness: " + (totalFitness / totalRuns));
-        System.out.println("Persentase Keberhasilan: " + successRate + "%");
         System.out.println("Waktu Eksekusi: " + totalExecutionTime + " detik");
 
         // Tampilkan solusi terbaik yang ditemukan
